@@ -1,40 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Inter:wght@400;500;600;700;800&display=swap');
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: #0a0d08;
-  color: #d8dcc8;
+  background: #080b06;
+  color: #d4d9c4;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 :root {
-  /* Camo / moto palette */
-  --accent:        #5a8a2e;
-  --accent-light:  #8fcc4a;
-  --accent-glow:   rgba(90, 138, 46, 0.35);
-  --accent2:       #c8860a;
-  --accent2-light: #f5a623;
-  --surface:       rgba(255,255,255,0.04);
-  --surface-solid: #111408;
-  --surface2:      rgba(255,255,255,0.07);
-  --border:        rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.15);
-  --text-muted:    #707860;
   --green:         #6abf40;
-  --green-glow:    rgba(106, 191, 64, 0.22);
-  --yellow:        #f5a623;
+  --green-bright:  #8fdc50;
+  --green-glow:    rgba(106,191,64,0.25);
+  --green-deep:    #3a7020;
+  --orange:        #e8820a;
+  --orange-light:  #f5a623;
+  --orange-glow:   rgba(232,130,10,0.3);
+  --surface:       rgba(255,255,255,0.035);
+  --surface2:      rgba(255,255,255,0.06);
+  --border:        rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.13);
+  --text-muted:    #686e58;
   --red:           #e05050;
-
-  /* Camo tones */
-  --camo-dark:   #1a1f10;
-  --camo-mid:    #2a3318;
-  --camo-light:  #3d4f26;
-  --camo-tan:    #6b6040;
-  --camo-khaki:  #8a7a50;
+  --yellow:        #f5a623;
+  --camo1: #0f1409;
+  --camo2: #1a2010;
+  --camo3: #252f16;
+  --camo4: #30391e;
+  --camo5: #3d4f26;
 }
