@@ -94,11 +94,12 @@ async function scrapeResultsPage(query, page = 1) {
 }
 
 const insert = db.prepare(`
-  INSERT INTO listings (source, source_id, title, price, category, subcategory, condition, location, url, image_url, sold, listed_at, scraped_at)
-  VALUES (@source, @source_id, @title, @price, @category, @subcategory, @condition, @location, @url, @image_url, 1, @listed_at, datetime('now'))
+  INSERT INTO listings (source, source_id, title, price, category, subcategory, condition, location, url, image_url, sold, listed_at, first_seen_at, scraped_at)
+  VALUES (@source, @source_id, @title, @price, @category, @subcategory, @condition, @location, @url, @image_url, 1, @listed_at, datetime('now'), datetime('now'))
   ON CONFLICT(source, source_id) DO UPDATE SET
-    price = excluded.price,
-    scraped_at = excluded.scraped_at
+    price      = excluded.price,
+    scraped_at = datetime('now')
+    -- first_seen_at preserved so 6-month expiry counts from when we first recorded it
 `);
 
 const log = db.prepare(`

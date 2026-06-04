@@ -86,11 +86,12 @@ async function scrapeMetroCategory(metro, target, offset = 0) {
 }
 
 const insert = db.prepare(`
-  INSERT INTO listings (source, source_id, title, price, category, subcategory, condition, location, url, scraped_at)
-  VALUES (@source, @source_id, @title, @price, @category, @subcategory, @condition, @location, @url, datetime('now'))
+  INSERT INTO listings (source, source_id, title, price, category, subcategory, condition, location, url, first_seen_at, scraped_at)
+  VALUES (@source, @source_id, @title, @price, @category, @subcategory, @condition, @location, @url, datetime('now'), datetime('now'))
   ON CONFLICT(source, source_id) DO UPDATE SET
-    price = excluded.price,
-    scraped_at = excluded.scraped_at
+    price      = excluded.price,
+    scraped_at = datetime('now')
+    -- first_seen_at is intentionally NOT updated so the 6-month clock starts from first scrape
 `);
 
 const log = db.prepare(`

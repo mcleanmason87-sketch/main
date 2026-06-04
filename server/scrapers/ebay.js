@@ -67,11 +67,12 @@ async function searchSoldListings(token, query, limit = 50) {
 }
 
 const insert = db.prepare(`
-  INSERT INTO listings (source, source_id, title, price, category, subcategory, condition, location, url, image_url, scraped_at)
-  VALUES (@source, @source_id, @title, @price, @category, @subcategory, @condition, @location, @url, @image_url, datetime('now'))
+  INSERT INTO listings (source, source_id, title, price, category, subcategory, condition, location, url, image_url, first_seen_at, scraped_at)
+  VALUES (@source, @source_id, @title, @price, @category, @subcategory, @condition, @location, @url, @image_url, datetime('now'), datetime('now'))
   ON CONFLICT(source, source_id) DO UPDATE SET
-    price = excluded.price,
-    scraped_at = excluded.scraped_at
+    price      = excluded.price,
+    scraped_at = datetime('now')
+    -- first_seen_at preserved so 6-month expiry counts from when we first recorded it
 `);
 
 const log = db.prepare(`

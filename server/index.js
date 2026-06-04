@@ -24,7 +24,7 @@ app.get("/api/search", (req, res) => {
            ROUND(AVG(price), 0) as avg_price
     FROM listings
     WHERE (title LIKE ? OR category LIKE ? OR subcategory LIKE ?)
-      AND scraped_at >= datetime('now', '-180 days')
+      AND first_seen_at >= datetime('now', '-180 days')
     GROUP BY category, subcategory
     ORDER BY count DESC
     LIMIT 12
@@ -53,14 +53,14 @@ app.get("/api/category", (req, res) => {
     ? db.prepare(`
         SELECT * FROM listings
         WHERE category = ? AND subcategory = ?
-          AND scraped_at >= datetime('now', '-180 days')
+          AND first_seen_at >= datetime('now', '-180 days')
         ORDER BY scraped_at DESC
         LIMIT 500
       `).all(category, subcategory)
     : db.prepare(`
         SELECT * FROM listings
         WHERE category = ?
-          AND scraped_at >= datetime('now', '-180 days')
+          AND first_seen_at >= datetime('now', '-180 days')
         ORDER BY scraped_at DESC
         LIMIT 500
       `).all(category);
@@ -78,7 +78,7 @@ app.get("/api/category", (req, res) => {
     FROM listings
     WHERE category = ?
       ${subcategory ? "AND subcategory = ?" : ""}
-      AND scraped_at >= datetime('now', '-180 days')
+      AND first_seen_at >= datetime('now', '-180 days')
     GROUP BY week
     ORDER BY week ASC
   `).all(...(subcategory ? [category, subcategory] : [category]));
