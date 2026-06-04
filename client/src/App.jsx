@@ -281,12 +281,18 @@ export default function App() {
               <p className="empty-label">Try searching for</p>
               <div className="category-chips">
                 {[
-                  { label: "📱 iPhone 14 Pro", key: "iphone 14 pro" },
+                  { label: "🏍️ Harley Road Glide", key: "harley davidson road glide" },
+                  { label: "⛵ Sea Ray Sundancer", key: "sea ray sundancer" },
+                  { label: "⌚ Rolex Daytona", key: "rolex daytona" },
+                  { label: "👜 Hermès Birkin", key: "hermes birkin" },
+                  { label: "🏀 Jordan Rookie Card", key: "michael jordan rookie card" },
+                  { label: "🎸 Gibson Les Paul", key: "gibson les paul" },
+                  { label: "🏍️ Ducati Panigale V4", key: "ducati panigale v4" },
+                  { label: "⛵ MasterCraft X26", key: "mastercraft x26" },
+                  { label: "⌚ Patek Nautilus", key: "patek philippe nautilus" },
+                  { label: "📷 Leica M11", key: "leica m11" },
                   { label: "🎮 PS5", key: "ps5" },
                   { label: "👟 Jordan 1 Chicago", key: "jordan 1 chicago" },
-                  { label: "🃏 Pokémon Charizard", key: "pokemon charizard" },
-                  { label: "💻 MacBook Pro", key: "macbook pro" },
-                  { label: "⌚ Rolex Submariner", key: "rolex submariner" },
                 ].map((c) => (
                   <button
                     key={c.key}
