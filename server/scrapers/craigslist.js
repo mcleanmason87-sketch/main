@@ -3,11 +3,8 @@ const cheerio = require("cheerio");
 const db = require("../db");
 
 const TARGETS = [
-  { code: "mca", category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { code: "atv", category: "Motorcycles",   subcategory: "ATV / UTV / Dirt Bike" },
-  { code: "boa", category: "Boats",         subcategory: "Powerboat" },
-  { code: "jet", category: "Boats",         subcategory: "Jet Ski / PWC" },
-  { code: "rvs", category: "RVs & Campers", subcategory: "RV / Motorhome" },
+  { code: "mca", category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { code: "atv", category: "Motorcycles", subcategory: "Dirt Bike" },
 ];
 
 // Top 10 metros only — fast first run, still broad coverage

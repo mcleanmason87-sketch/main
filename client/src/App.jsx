@@ -207,13 +207,12 @@ function VerdictBox({ fairLow, fairHigh, asking }) {
 }
 
 const BROWSE_CHIPS = [
-  { label: "🏍️ Street Motorcycles", category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { label: "🏍️ Sport Bikes",        category: "Motorcycles",   subcategory: "Sport Bike" },
-  { label: "🏍️ ATVs & UTVs",        category: "Motorcycles",   subcategory: "ATV / UTV / Dirt Bike" },
-  { label: "⛵ Powerboats",          category: "Boats",         subcategory: "Powerboat" },
-  { label: "⛵ Jet Skis / PWC",      category: "Boats",         subcategory: "Jet Ski / PWC" },
-  { label: "⛵ Wake Boats",          category: "Boats",         subcategory: "Wakeboard Boat" },
-  { label: "🚐 RVs & Campers",      category: "RVs & Campers", subcategory: "RV / Motorhome" },
+  { label: "🏍️ Street & Cruiser",      category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { label: "🏁 Sport Bikes",            category: "Motorcycles", subcategory: "Sport Bike" },
+  { label: "🌍 Adventure / Dual Sport", category: "Motorcycles", subcategory: "Adventure / Dual Sport" },
+  { label: "🏚️ Dirt Bikes",            category: "Motorcycles", subcategory: "Dirt Bike" },
+  { label: "🕰️ Classic & Vintage",     category: "Motorcycles", subcategory: "Classic / Vintage" },
+  { label: "🏍️ Harley-Davidson",       category: "Motorcycles", subcategory: null },
 ];
 
 export default function App() {
@@ -270,8 +269,7 @@ export default function App() {
           </div>
           <h1>What's it <span>worth?</span></h1>
           <p className="subtitle">
-            Real resale prices from Craigslist &amp; Bring a Trailer — weighted by recency,
-            1 year of sales history, outliers removed.
+            Real resale prices for motorcycles — powered by Craigslist, Cycle Trader &amp; Bring a Trailer.
           </p>
 
           <div className="search-wrap">
@@ -280,7 +278,7 @@ export default function App() {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Search motorcycles, boats, jet skis…"
+                placeholder="Search Harley, Ducati, Honda, sport bikes…"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); if (!e.target.value) setItemData(null); }}
                 onFocus={() => setShowSuggestions(true)}
@@ -332,7 +330,7 @@ export default function App() {
                 <div className="source-bar">
                   {Object.entries(s.sources).map(([src, cnt]) => (
                     <span key={src} className={`source-tag source-${src}`}>
-                      {src === "bringatrailer" ? "Bring a Trailer" : src === "ebay" ? "eBay" : "Craigslist"} — {cnt}
+                      {src === "bringatrailer" ? "Bring a Trailer" : src === "ebay" ? "eBay" : src === "cycletrader" ? "Cycle Trader" : "Craigslist"} — {cnt}
                     </span>
                   ))}
                   {s.outliersRemoved > 0 && (

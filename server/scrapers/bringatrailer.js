@@ -10,23 +10,18 @@ const HEADERS = {
 
 // BaT search terms mapped to our categories
 const TARGETS = [
-  { query: "motorcycle",      category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "harley-davidson", category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "ducati",          category: "Motorcycles",   subcategory: "Sport Bike" },
-  { query: "kawasaki",        category: "Motorcycles",   subcategory: "Sport Bike" },
-  { query: "bmw-motorcycle",  category: "Motorcycles",   subcategory: "Adventure" },
-  { query: "indian",          category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "triumph",         category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "honda-motorcycle",category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "yamaha-motorcycle",category:"Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "powerboat",       category: "Boats",         subcategory: "Powerboat" },
-  { query: "center-console",  category: "Boats",         subcategory: "Powerboat" },
-  { query: "bowrider",        category: "Boats",         subcategory: "Powerboat" },
-  { query: "wake-boat",       category: "Boats",         subcategory: "Wakeboard Boat" },
-  { query: "jet-ski",         category: "Boats",         subcategory: "Jet Ski / PWC" },
-  { query: "atv",             category: "Motorcycles",   subcategory: "ATV / UTV / Dirt Bike" },
-  { query: "side-by-side",    category: "Motorcycles",   subcategory: "ATV / UTV / Dirt Bike" },
-  { query: "rv-motorhome",    category: "RVs & Campers", subcategory: "RV / Motorhome" },
+  { query: "motorcycle",         category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "harley-davidson",    category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "ducati",             category: "Motorcycles", subcategory: "Sport Bike" },
+  { query: "kawasaki",           category: "Motorcycles", subcategory: "Sport Bike" },
+  { query: "bmw-motorcycle",     category: "Motorcycles", subcategory: "Adventure / Dual Sport" },
+  { query: "indian",             category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "triumph",            category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "honda-motorcycle",   category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "yamaha-motorcycle",  category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "suzuki-motorcycle",  category: "Motorcycles", subcategory: "Sport Bike" },
+  { query: "vintage-motorcycle", category: "Motorcycles", subcategory: "Classic / Vintage" },
+  { query: "cafe-racer",         category: "Motorcycles", subcategory: "Classic / Vintage" },
 ];
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }

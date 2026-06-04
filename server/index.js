@@ -9,8 +9,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-function categoryIcon(cat = "") {
-  return { "Motorcycles": "🏍️", "Boats": "⛵", "RVs & Campers": "🚐", "Powersports": "🛷" }[cat] || "🏷️";
+function categoryIcon(cat = "", sub = "") {
+  if (cat === "Motorcycles") return "🏍️";
+  return "🏷️";
 }
 
 // ── Search ────────────────────────────────────────────────────────────────────

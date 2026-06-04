@@ -18,13 +18,10 @@ const { computeStats } = require("./pricing");
 const DEPRECIATION = {
   "Street / Cruiser":       { rate: 0.15, floor: 0.25 }, // 15%/yr, retains 25% min
   "Sport Bike":             { rate: 0.20, floor: 0.20 },
-  "ATV / UTV / Dirt Bike":  { rate: 0.16, floor: 0.25 },
-  "Adventure":              { rate: 0.14, floor: 0.28 },
-  "Powerboat":              { rate: 0.12, floor: 0.30 },
-  "Jet Ski / PWC":          { rate: 0.18, floor: 0.22 },
-  "Wakeboard Boat":         { rate: 0.13, floor: 0.28 },
-  "RV / Motorhome":         { rate: 0.22, floor: 0.20 }, // first 3 yrs steep
-  "Snowmobile":             { rate: 0.14, floor: 0.30 },
+  "Adventure / Dual Sport": { rate: 0.14, floor: 0.28 },
+  "Dirt Bike":              { rate: 0.18, floor: 0.20 },
+  "Classic / Vintage":      { rate: -0.02, floor: 0.80 }, // classics appreciate
+  "Cruiser":                { rate: 0.15, floor: 0.25 },
   "default":                { rate: 0.15, floor: 0.25 },
 };
 
@@ -40,9 +37,6 @@ const CONDITION_MULT = {
 // ── Mileage penalty per 1,000 miles/hours over typical ───────────────────────
 const MILEAGE_PENALTY = {
   "Motorcycles": 0.008,  // 0.8% per 1k miles over 5k baseline
-  "Boats":       0.010,  // 1.0% per 100 hours over 200hr baseline
-  "RVs & Campers": 0.005,
-  "Powersports": 0.009,
   "default":     0.008,
 };
 

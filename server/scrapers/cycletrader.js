@@ -9,14 +9,12 @@ const HEADERS = {
 };
 
 const TARGETS = [
-  { path: "motorcycles-for-sale",         category: "Motorcycles",  subcategory: "Street / Cruiser" },
-  { path: "sport-motorcycles-for-sale",   category: "Motorcycles",  subcategory: "Sport Bike" },
-  { path: "cruiser-motorcycles-for-sale", category: "Motorcycles",  subcategory: "Street / Cruiser" },
-  { path: "adventure-motorcycles-for-sale", category: "Motorcycles", subcategory: "Adventure" },
-  { path: "ATVs-for-sale",                category: "Motorcycles",  subcategory: "ATV / UTV / Dirt Bike" },
-  { path: "side-by-sides-for-sale",       category: "Motorcycles",  subcategory: "ATV / UTV / Dirt Bike" },
-  { path: "personal-watercraft-for-sale", category: "Boats",        subcategory: "Jet Ski / PWC" },
-  { path: "snowmobiles-for-sale",         category: "Powersports",  subcategory: "Snowmobile" },
+  { path: "motorcycles-for-sale",           category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { path: "sport-motorcycles-for-sale",     category: "Motorcycles", subcategory: "Sport Bike" },
+  { path: "cruiser-motorcycles-for-sale",   category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { path: "adventure-motorcycles-for-sale", category: "Motorcycles", subcategory: "Adventure / Dual Sport" },
+  { path: "dirt-bikes-for-sale",            category: "Motorcycles", subcategory: "Dirt Bike" },
+  { path: "classic-motorcycles-for-sale",   category: "Motorcycles", subcategory: "Classic / Vintage" },
 ];
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }

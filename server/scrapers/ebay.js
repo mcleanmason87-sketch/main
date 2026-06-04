@@ -7,18 +7,18 @@ const db = require("../db");
 const APP_ID = process.env.EBAY_APP_ID || null;
 
 const SEARCH_TERMS = [
-  { query: "motorcycle",          category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "harley davidson",     category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "ducati",              category: "Motorcycles",   subcategory: "Sport Bike" },
-  { query: "kawasaki ninja",      category: "Motorcycles",   subcategory: "Sport Bike" },
-  { query: "indian motorcycle",   category: "Motorcycles",   subcategory: "Street / Cruiser" },
-  { query: "bmw motorcycle",      category: "Motorcycles",   subcategory: "Adventure" },
-  { query: "atv four wheeler",    category: "Motorcycles",   subcategory: "ATV / UTV" },
-  { query: "jet ski sea-doo",     category: "Boats",         subcategory: "Jet Ski / PWC" },
-  { query: "yamaha waverunner",   category: "Boats",         subcategory: "Jet Ski / PWC" },
-  { query: "boston whaler",       category: "Boats",         subcategory: "Powerboat" },
-  { query: "sea ray boat",        category: "Boats",         subcategory: "Powerboat" },
-  { query: "malibu boat",        category: "Boats",         subcategory: "Wakeboard Boat" },
+  { query: "motorcycle",          category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "harley davidson",     category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "ducati",              category: "Motorcycles", subcategory: "Sport Bike" },
+  { query: "kawasaki ninja",      category: "Motorcycles", subcategory: "Sport Bike" },
+  { query: "indian motorcycle",   category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "bmw motorcycle",      category: "Motorcycles", subcategory: "Adventure / Dual Sport" },
+  { query: "triumph motorcycle",  category: "Motorcycles", subcategory: "Street / Cruiser" },
+  { query: "honda cbr",           category: "Motorcycles", subcategory: "Sport Bike" },
+  { query: "yamaha r1",           category: "Motorcycles", subcategory: "Sport Bike" },
+  { query: "suzuki gsxr",         category: "Motorcycles", subcategory: "Sport Bike" },
+  { query: "vintage motorcycle",  category: "Motorcycles", subcategory: "Classic / Vintage" },
+  { query: "cafe racer",          category: "Motorcycles", subcategory: "Classic / Vintage" },
 ];
 
 function inferCondition(conditionText = "") {
