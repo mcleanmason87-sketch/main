@@ -1,0 +1,24 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: #0f0f13;
+  color: #e8e8f0;
+  min-height: 100vh;
+}
+
+:root {
+  --accent: #6c63ff;
+  --accent-light: #8b84ff;
+  --surface: #1a1a24;
+  --surface2: #22222e;
+  --border: #2e2e3e;
+  --text-muted: #8888aa;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+}
