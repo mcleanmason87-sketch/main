@@ -4,6 +4,7 @@ const craigslist = require("./scrapers/craigslist");
 const cycletrader = require("./scrapers/cycletrader");
 const ebay = require("./scrapers/ebay");
 const bringatrailer = require("./scrapers/bringatrailer");
+const kbb = require("./scrapers/kbb");
 
 function pruneOldListings() {
   const result = db.prepare(`
@@ -23,10 +24,14 @@ async function runAll() {
   try { await craigslist.scrape(); }    catch (e) { console.error("[scheduler] Craigslist:", e.message); }
   try { await cycletrader.scrape(); }   catch (e) { console.error("[scheduler] CycleTrader:", e.message); }
   try { await ebay.scrape(); }          catch (e) { console.error("[scheduler] eBay:", e.message); }
-  // BaT runs less frequently — every other cycle — to avoid rate limiting
+  // BaT runs less frequently to avoid rate limiting
   const hour = new Date().getHours();
   if (hour % 8 === 0) {
     try { await bringatrailer.scrape(); } catch (e) { console.error("[scheduler] BaT:", e.message); }
+  }
+  // KBB runs once daily — values don't change often
+  if (hour === 2) {
+    try { await kbb.scrape(); } catch (e) { console.error("[scheduler] KBB:", e.message); }
   }
   console.log("[scheduler] Scrape cycle complete.\n");
 }

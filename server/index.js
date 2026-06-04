@@ -163,6 +163,105 @@ app.get("/api/predict", (req, res) => {
   res.json(result);
 });
 
+// ── KBB values for a brand ───────────────────────────────────────────────────
+app.get("/api/kbb/brand/:make", (req, res) => {
+  const make = decodeURIComponent(req.params.make);
+  const rows = db.prepare(`
+    SELECT make, model, year, trim, trade_in_low, trade_in_high,
+           private_low, private_high, retail_low, retail_high, msrp, kbb_url
+    FROM kbb_values
+    WHERE make LIKE ?
+    ORDER BY model, year DESC
+  `).all(`%${make}%`);
+
+  if (!rows.length) return res.json({ make, models: [] });
+
+  // Group by model
+  const models = {};
+  for (const r of rows) {
+    if (!models[r.model]) models[r.model] = { name: r.model, years: [] };
+    models[r.model].years.push(r);
+  }
+
+  res.json({ make, models: Object.values(models) });
+});
+
+// ── KBB lookup for a specific bike ────────────────────────────────────────────
+app.get("/api/kbb/lookup", (req, res) => {
+  const { make, model, year } = req.query;
+  if (!make || !model || !year) return res.status(400).json({ error: "make, model, year required" });
+
+  const row = db.prepare(`
+    SELECT * FROM kbb_values
+    WHERE make LIKE ? AND model LIKE ? AND year = ?
+    LIMIT 1
+  `).get(`%${make}%`, `%${model}%`, parseInt(year));
+
+  res.json(row || { error: "No KBB data found for this bike" });
+});
+
+// ── KBB brand summary list ────────────────────────────────────────────────────
+app.get("/api/kbb/brands", (req, res) => {
+  const rows = db.prepare(`
+    SELECT make, COUNT(DISTINCT model) as models, COUNT(*) as total,
+           MIN(year) as oldest, MAX(year) as newest,
+           ROUND(AVG(private_low), 0) as avg_low,
+           ROUND(AVG(private_high), 0) as avg_high
+    FROM kbb_values
+    GROUP BY make
+    ORDER BY make ASC
+  `).all();
+  res.json({ brands: rows });
+});
+
+// ── Trigger KBB scrape manually ───────────────────────────────────────────────
+app.post("/api/kbb/scrape", (req, res) => {
+  res.json({ message: "KBB scrape started" });
+  const kbb = require("./scrapers/kbb");
+  kbb.scrape().catch(console.error);
+});
+
+// ── Brand search in listings ──────────────────────────────────────────────────
+app.get("/api/brand/:brand", (req, res) => {
+  const brand = decodeURIComponent(req.params.brand);
+  const term = `%${brand}%`;
+
+  const listings = db.prepare(`
+    SELECT * FROM listings
+    WHERE title LIKE ?
+      AND category = 'Motorcycles'
+      AND first_seen_at >= datetime('now', '-365 days')
+    ORDER BY scraped_at DESC
+    LIMIT 500
+  `).all(term);
+
+  if (!listings.length) return res.status(404).json({ error: `No listings found for ${brand}` });
+
+  const stats = computeStats(listings);
+
+  // KBB reference for this brand
+  const kbbRef = db.prepare(`
+    SELECT ROUND(AVG(private_low), 0) as avg_kbb_low,
+           ROUND(AVG(private_high), 0) as avg_kbb_high,
+           COUNT(*) as kbb_count
+    FROM kbb_values WHERE make LIKE ?
+  `).get(term);
+
+  const recentSales = listings.slice(0, 30).map((l) => ({
+    date: (l.listed_at || l.scraped_at || "").split(" ")[0],
+    price: l.price, title: l.title, condition: l.condition,
+    location: l.location, source: l.source, url: l.url, sold: !!l.sold,
+  }));
+
+  res.json({
+    brand,
+    image: "🏍️",
+    stats,
+    kbbReference: kbbRef?.kbb_count > 0 ? kbbRef : null,
+    sales: recentSales,
+  });
+});
+
 // ── Manual scrape trigger ─────────────────────────────────────────────────────
 app.post("/api/scrape", (req, res) => {
   res.json({ message: "Scrape started" });

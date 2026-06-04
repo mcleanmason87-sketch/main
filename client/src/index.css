@@ -4,25 +4,37 @@
   padding: 0;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: #08080f;
-  color: #e2e2f0;
+  background: #0a0d08;
+  color: #d8dcc8;
   min-height: 100vh;
 }
 
 :root {
-  --accent: #7c6fff;
-  --accent-light: #a89dff;
-  --accent-glow: rgba(124, 111, 255, 0.35);
-  --surface: rgba(255,255,255,0.04);
-  --surface-solid: #111120;
-  --surface2: rgba(255,255,255,0.07);
-  --border: rgba(255,255,255,0.09);
+  /* Camo / moto palette */
+  --accent:        #5a8a2e;
+  --accent-light:  #8fcc4a;
+  --accent-glow:   rgba(90, 138, 46, 0.35);
+  --accent2:       #c8860a;
+  --accent2-light: #f5a623;
+  --surface:       rgba(255,255,255,0.04);
+  --surface-solid: #111408;
+  --surface2:      rgba(255,255,255,0.07);
+  --border:        rgba(255,255,255,0.08);
   --border-strong: rgba(255,255,255,0.15);
-  --text-muted: #7070a0;
-  --green: #34d399;
-  --green-glow: rgba(52, 211, 153, 0.2);
-  --yellow: #fbbf24;
-  --red: #f87171;
+  --text-muted:    #707860;
+  --green:         #6abf40;
+  --green-glow:    rgba(106, 191, 64, 0.22);
+  --yellow:        #f5a623;
+  --red:           #e05050;
+
+  /* Camo tones */
+  --camo-dark:   #1a1f10;
+  --camo-mid:    #2a3318;
+  --camo-light:  #3d4f26;
+  --camo-tan:    #6b6040;
+  --camo-khaki:  #8a7a50;
 }
