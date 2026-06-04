@@ -6,19 +6,23 @@
 
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: #0f0f13;
-  color: #e8e8f0;
+  background: #08080f;
+  color: #e2e2f0;
   min-height: 100vh;
 }
 
 :root {
-  --accent: #6c63ff;
-  --accent-light: #8b84ff;
-  --surface: #1a1a24;
-  --surface2: #22222e;
-  --border: #2e2e3e;
-  --text-muted: #8888aa;
-  --green: #22c55e;
-  --yellow: #eab308;
-  --red: #ef4444;
+  --accent: #7c6fff;
+  --accent-light: #a89dff;
+  --accent-glow: rgba(124, 111, 255, 0.35);
+  --surface: rgba(255,255,255,0.04);
+  --surface-solid: #111120;
+  --surface2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.15);
+  --text-muted: #7070a0;
+  --green: #34d399;
+  --green-glow: rgba(52, 211, 153, 0.2);
+  --yellow: #fbbf24;
+  --red: #f87171;
 }
