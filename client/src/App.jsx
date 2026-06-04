@@ -321,30 +321,40 @@ function ResultsView({ itemData, asking, setAsking }) {
   );
 }
 
-// ── Brand Showcase (scroll-snap slideshow) ─────────────────────────────────
-function BrandShowcase({ onSelect, activeBrand }) {
+// ── Brand Showcase ─────────────────────────────────────────────────────────
+function BrandShowcase({ onSelect, activeBrand, brandPrices }) {
   return (
     <section className="showcase">
-      {BRANDS.map((brand) => (
-        <div
-          key={brand.slug}
-          className={`showcase-slide ${activeBrand === brand.slug ? "showcase-slide--active" : ""}`}
-          onClick={() => onSelect(brand)}
-        >
-          <img
-            className="showcase-img"
-            src={brand.img}
-            alt={brand.name}
-            onError={e => { e.target.style.display = "none"; }}
-          />
-          <div className="showcase-overlay" style={{ background: `linear-gradient(135deg, ${brand.color}cc 0%, rgba(5,8,4,0.85) 100%)` }} />
-          <div className="showcase-content">
-            <div className="showcase-brand">{brand.name}</div>
-            <div className="showcase-cta">View Prices</div>
+      {BRANDS.map((brand) => {
+        const prices = brandPrices[brand.slug];
+        return (
+          <div
+            key={brand.slug}
+            className={`showcase-slide ${activeBrand === brand.slug ? "showcase-slide--active" : ""}`}
+            onClick={() => onSelect(brand)}
+          >
+            <img
+              className="showcase-img"
+              src={brand.img}
+              alt={brand.name}
+              onError={e => { e.target.style.display = "none"; }}
+            />
+            <div className="showcase-overlay" style={{ background: `linear-gradient(160deg, ${brand.color}bb 0%, rgba(5,8,4,0.92) 100%)` }} />
+            <div className="showcase-content">
+              <div className="showcase-brand">{brand.name}</div>
+              {prices ? (
+                <div className="showcase-prices">
+                  <div className="showcase-price-range">${prices.low} – ${prices.high}</div>
+                  <div className="showcase-price-label">Private Party Range</div>
+                </div>
+              ) : (
+                <div className="showcase-cta">Tap to View Prices</div>
+              )}
+            </div>
+            {activeBrand === brand.slug && <div className="showcase-active-bar" />}
           </div>
-          {activeBrand === brand.slug && <div className="showcase-active-bar" />}
-        </div>
-      ))}
+        );
+      })}
     </section>
   );
 }
@@ -359,12 +369,33 @@ export default function App() {
   const [dbStatus, setDbStatus] = useState(null);
   const [activeBrand, setActiveBrand] = useState(null);
   const [view, setView] = useState("home"); // "home" | "results"
+  const [brandPrices, setBrandPrices] = useState({});
   const inputRef = useRef(null);
   const resultsRef = useRef(null);
   const debouncedQuery = useDebounce(query, 250);
 
   useEffect(() => {
     fetch(`${API}/status`).then(r => r.json()).then(setDbStatus).catch(() => setDbStatus({ total: 0 }));
+  }, []);
+
+  // Load KBB price summaries for all brands upfront
+  useEffect(() => {
+    const prices = {};
+    Promise.all(
+      BRANDS.map(brand =>
+        fetch(`${API}/brand/${encodeURIComponent(brand.name)}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.stats && d.stats.fairLow) {
+              prices[brand.slug] = {
+                low: d.stats.fairLow.toLocaleString(),
+                high: d.stats.fairHigh.toLocaleString(),
+              };
+            }
+          })
+          .catch(() => {})
+      )
+    ).then(() => setBrandPrices({ ...prices }));
   }, []);
 
   useEffect(() => {
@@ -480,7 +511,7 @@ export default function App() {
       </div>
 
       {/* ── Brand Showcase ── */}
-      <BrandShowcase onSelect={loadBrand} activeBrand={activeBrand} />
+      <BrandShowcase onSelect={loadBrand} activeBrand={activeBrand} brandPrices={brandPrices} />
 
       {/* ── Results Panel ── */}
       <div ref={resultsRef} className={`results-panel ${view === "results" || loading ? "results-panel--visible" : ""}`}>

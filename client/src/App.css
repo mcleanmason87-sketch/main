@@ -318,6 +318,25 @@
 .showcase-slide:hover .showcase-cta { opacity: 1; transform: translateY(0); }
 .showcase-slide--active .showcase-cta { opacity: 1; transform: translateY(0); color: var(--green-bright); }
 
+.showcase-prices {
+  margin-top: 0.4rem;
+}
+.showcase-price-range {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.15rem; font-weight: 900;
+  color: var(--green-bright);
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 16px var(--green-glow);
+  line-height: 1;
+}
+.showcase-price-label {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-top: 0.25rem;
+}
+
 /* ── Results panel ────────────────────────────────────────────── */
 .results-panel {
   display: none;
