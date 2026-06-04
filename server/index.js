@@ -24,7 +24,7 @@ app.get("/api/search", (req, res) => {
            ROUND(AVG(price), 0) as avg_price
     FROM listings
     WHERE (title LIKE ? OR category LIKE ? OR subcategory LIKE ?)
-      AND first_seen_at >= datetime('now', '-180 days')
+      AND first_seen_at >= datetime('now', '-365 days')
     GROUP BY category, subcategory
     ORDER BY count DESC
     LIMIT 12
@@ -48,19 +48,19 @@ app.get("/api/category", (req, res) => {
   const { category, subcategory } = req.query;
   if (!category) return res.status(400).json({ error: "category required" });
 
-  // Pull 6 months of data
+  // Pull 1 year of data
   const listings = subcategory
     ? db.prepare(`
         SELECT * FROM listings
         WHERE category = ? AND subcategory = ?
-          AND first_seen_at >= datetime('now', '-180 days')
+          AND first_seen_at >= datetime('now', '-365 days')
         ORDER BY scraped_at DESC
         LIMIT 500
       `).all(category, subcategory)
     : db.prepare(`
         SELECT * FROM listings
         WHERE category = ?
-          AND first_seen_at >= datetime('now', '-180 days')
+          AND first_seen_at >= datetime('now', '-365 days')
         ORDER BY scraped_at DESC
         LIMIT 500
       `).all(category);
@@ -78,7 +78,7 @@ app.get("/api/category", (req, res) => {
     FROM listings
     WHERE category = ?
       ${subcategory ? "AND subcategory = ?" : ""}
-      AND first_seen_at >= datetime('now', '-180 days')
+      AND first_seen_at >= datetime('now', '-365 days')
     GROUP BY week
     ORDER BY week ASC
   `).all(...(subcategory ? [category, subcategory] : [category]));
@@ -114,7 +114,7 @@ app.get("/api/browse", (req, res) => {
            MIN(price) as min_price,
            MAX(price) as max_price
     FROM listings
-    WHERE scraped_at >= datetime('now', '-180 days')
+    WHERE scraped_at >= datetime('now', '-365 days')
     GROUP BY category, subcategory
     ORDER BY category, subcategory
   `).all();

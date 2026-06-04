@@ -78,7 +78,7 @@ async function scrapeResultsPage(query, page = 1) {
 
       if (!price || price < 500) return;
 
-      // Stop if older than 6 months
+      // Stop if older than 1 year
       const listingDate = new Date(date);
       if (listingDate < cutoff) { hitCutoff = true; return; }
 
@@ -99,7 +99,7 @@ const insert = db.prepare(`
   ON CONFLICT(source, source_id) DO UPDATE SET
     price      = excluded.price,
     scraped_at = datetime('now')
-    -- first_seen_at preserved so 6-month expiry counts from when we first recorded it
+    -- first_seen_at preserved so 1-year expiry counts from when we first recorded it
 `);
 
 const log = db.prepare(`
@@ -108,7 +108,7 @@ const log = db.prepare(`
 `);
 
 async function scrape() {
-  console.log("[bringatrailer] Starting historical scrape (6 months)…");
+  console.log("[bringatrailer] Starting historical scrape (1 year)…");
   let total = 0;
 
   for (const target of TARGETS) {

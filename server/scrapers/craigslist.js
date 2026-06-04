@@ -91,7 +91,7 @@ const insert = db.prepare(`
   ON CONFLICT(source, source_id) DO UPDATE SET
     price      = excluded.price,
     scraped_at = datetime('now')
-    -- first_seen_at is intentionally NOT updated so the 6-month clock starts from first scrape
+    -- first_seen_at is intentionally NOT updated so the 1-year clock starts from first scrape
 `);
 
 const log = db.prepare(`

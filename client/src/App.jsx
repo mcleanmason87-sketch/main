@@ -169,7 +169,7 @@ export default function App() {
           <h1>What's it <span>worth?</span></h1>
           <p className="subtitle">
             Real resale prices from Craigslist &amp; Bring a Trailer — weighted by recency,
-            6 months of sales history, outliers removed.
+            1 year of sales history, outliers removed.
           </p>
 
           <div className="search-wrap">
@@ -338,7 +338,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        Data from Craigslist &amp; Bring a Trailer · 6-month window · Weighted by recency · Updated every 4 hours
+        Data from Craigslist &amp; Bring a Trailer · 1-year window · Weighted by recency · Updated every 4 hours
       </footer>
     </div>
   );

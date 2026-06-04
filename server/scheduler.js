@@ -7,13 +7,13 @@ const bringatrailer = require("./scrapers/bringatrailer");
 function pruneOldListings() {
   const result = db.prepare(`
     DELETE FROM listings
-    WHERE first_seen_at < datetime('now', '-180 days')
+    WHERE first_seen_at < datetime('now', '-365 days')
   `).run();
 
   if (result.changes > 0) {
-    console.log(`[cleanup] Removed ${result.changes} listings older than 6 months.`);
+    console.log(`[cleanup] Removed ${result.changes} listings older than 1 year.`);
     db.prepare(`INSERT INTO scrape_log (source, category, status, count, message) VALUES (?, ?, ?, ?, ?)`)
-      .run("system", "cleanup", "ok", result.changes, "Pruned listings older than 6 months");
+      .run("system", "cleanup", "ok", result.changes, "Pruned listings older than 1 year");
   }
 }
 
@@ -30,7 +30,7 @@ function start() {
   runAll();
   cron.schedule("0 */4 * * *", runAll);
 
-  // Prune listings older than 6 months once daily at 3am
+  // Prune listings older than 1 year once daily at 3am
   cron.schedule("0 3 * * *", pruneOldListings);
 
   console.log("[scheduler] Ready — scraping every 4 hours, cleanup daily at 3am.");

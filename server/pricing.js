@@ -17,9 +17,10 @@ function daysSince(dateStr) {
 
 function recencyWeight(days) {
   if (days <= 30)  return 1.0;
-  if (days <= 90)  return 0.75;
-  if (days <= 180) return 0.5;
-  return 0.3;
+  if (days <= 90)  return 0.80;
+  if (days <= 180) return 0.60;
+  if (days <= 270) return 0.40;
+  return 0.25; // 270–365 days
 }
 
 function sourceMultiplier(source) {
@@ -58,10 +59,10 @@ function percentile(sorted, p) {
  * vs the 60–180 day window. Returns "rising", "falling", or "stable".
  */
 function detectTrend(listings) {
-  const recent = listings.filter((l) => daysSince(l.scraped_at) <= 60).map((l) => l.price);
+  const recent = listings.filter((l) => daysSince(l.scraped_at) <= 90).map((l) => l.price);
   const older  = listings.filter((l) => {
     const d = daysSince(l.scraped_at);
-    return d > 60 && d <= 180;
+    return d > 90 && d <= 365;
   }).map((l) => l.price);
 
   if (recent.length < 3 || older.length < 3) return "stable";

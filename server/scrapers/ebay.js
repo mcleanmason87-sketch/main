@@ -72,7 +72,7 @@ const insert = db.prepare(`
   ON CONFLICT(source, source_id) DO UPDATE SET
     price      = excluded.price,
     scraped_at = datetime('now')
-    -- first_seen_at preserved so 6-month expiry counts from when we first recorded it
+    -- first_seen_at preserved so 1-year expiry counts from when we first recorded it
 `);
 
 const log = db.prepare(`
