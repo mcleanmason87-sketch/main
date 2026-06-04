@@ -20,8 +20,12 @@ function pruneOldListings() {
 async function runAll() {
   console.log(`\n[scheduler] Running scrape at ${new Date().toISOString()}`);
   try { await craigslist.scrape(); }    catch (e) { console.error("[scheduler] Craigslist:", e.message); }
-  try { await bringatrailer.scrape(); } catch (e) { console.error("[scheduler] BaT:", e.message); }
   try { await ebay.scrape(); }          catch (e) { console.error("[scheduler] eBay:", e.message); }
+  // BaT runs less frequently — every other cycle — to avoid rate limiting
+  const hour = new Date().getHours();
+  if (hour % 8 === 0) {
+    try { await bringatrailer.scrape(); } catch (e) { console.error("[scheduler] BaT:", e.message); }
+  }
   console.log("[scheduler] Scrape cycle complete.\n");
 }
 
