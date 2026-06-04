@@ -172,7 +172,7 @@ function ConditionBadge({ condition }) {
 }
 
 function SourceTag({ source, sold }) {
-  const labels = { bringatrailer: "Bring a Trailer", ebay: "eBay", craigslist: "Craigslist" };
+  const labels = { bringatrailer: "Bring a Trailer", ebay: "eBay", craigslist: "Craigslist", cycletrader: "Cycle Trader" };
   return (
     <span className={`source-tag source-${source}`}>
       {labels[source] || source}{sold ? " ✓" : ""}

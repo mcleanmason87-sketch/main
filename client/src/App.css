@@ -823,6 +823,7 @@
 .source-craigslist  { background: rgba(124,111,255,0.1); color: var(--accent-light); border: 1px solid rgba(124,111,255,0.2); }
 .source-bringatrailer { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
 .source-ebay        { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+.source-cycletrader { background: rgba(251,113,36,0.1); color: #fb7124; border: 1px solid rgba(251,113,36,0.2); }
 
 .outlier-note {
   font-size: 0.7rem;

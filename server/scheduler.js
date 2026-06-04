@@ -1,6 +1,7 @@
 const cron = require("node-cron");
 const db = require("./db");
 const craigslist = require("./scrapers/craigslist");
+const cycletrader = require("./scrapers/cycletrader");
 const ebay = require("./scrapers/ebay");
 const bringatrailer = require("./scrapers/bringatrailer");
 
@@ -20,6 +21,7 @@ function pruneOldListings() {
 async function runAll() {
   console.log(`\n[scheduler] Running scrape at ${new Date().toISOString()}`);
   try { await craigslist.scrape(); }    catch (e) { console.error("[scheduler] Craigslist:", e.message); }
+  try { await cycletrader.scrape(); }   catch (e) { console.error("[scheduler] CycleTrader:", e.message); }
   try { await ebay.scrape(); }          catch (e) { console.error("[scheduler] eBay:", e.message); }
   // BaT runs less frequently — every other cycle — to avoid rate limiting
   const hour = new Date().getHours();
