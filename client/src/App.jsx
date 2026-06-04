@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 const API = "/api";
@@ -139,22 +139,22 @@ function KbbCard({ kbbRef }) {
     <div className="kbb-card">
       <div className="kbb-header">
         <span className="kbb-logo">KBB</span>
-        <span className="kbb-title">Kelley Blue Book Reference</span>
+        <span className="kbb-title">Kelley Blue Book — Avg Across All Models & Years</span>
       </div>
       <div className="kbb-values">
         {kbbRef.avg_kbb_low && (
           <div className="kbb-val">
-            <span className="kbb-val-label">Private Party Range</span>
+            <span className="kbb-val-label">Private Party</span>
             <span className="kbb-val-num">
-              ${Math.round(kbbRef.avg_kbb_low).toLocaleString()} – ${Math.round(kbbRef.avg_kbb_high).toLocaleString()}
+              ${kbbRef.avg_kbb_low.toLocaleString()} – ${kbbRef.avg_kbb_high.toLocaleString()}
             </span>
           </div>
         )}
         {kbbRef.trade_in_low && (
           <div className="kbb-val">
-            <span className="kbb-val-label">Trade-In Range</span>
+            <span className="kbb-val-label">Trade-In</span>
             <span className="kbb-val-num">
-              ${Math.round(kbbRef.trade_in_low).toLocaleString()} – ${Math.round(kbbRef.trade_in_high).toLocaleString()}
+              ${kbbRef.trade_in_low.toLocaleString()} – ${kbbRef.trade_in_high.toLocaleString()}
             </span>
           </div>
         )}
@@ -162,12 +162,60 @@ function KbbCard({ kbbRef }) {
           <div className="kbb-val">
             <span className="kbb-val-label">Dealer Retail</span>
             <span className="kbb-val-num">
-              ${Math.round(kbbRef.retail_low).toLocaleString()} – ${Math.round(kbbRef.retail_high).toLocaleString()}
+              ${kbbRef.retail_low.toLocaleString()} – ${kbbRef.retail_high.toLocaleString()}
             </span>
           </div>
         )}
       </div>
-      <p className="kbb-note">Based on {kbbRef.kbb_count} KBB entries for this brand</p>
+      <p className="kbb-note">{kbbRef.kbb_count} model/year combos · Private party = what you'd pay person-to-person</p>
+    </div>
+  );
+}
+
+function ModelsTable({ models }) {
+  const [filter, setFilter] = React.useState("");
+  if (!models || models.length === 0) return null;
+  const grouped = {};
+  for (const m of models) {
+    if (!grouped[m.model]) grouped[m.model] = [];
+    grouped[m.model].push(m);
+  }
+  const filtered = Object.entries(grouped).filter(([name]) =>
+    !filter || name.toLowerCase().includes(filter.toLowerCase())
+  );
+  return (
+    <div className="card">
+      <h3>Model Prices by Year</h3>
+      <input
+        className="model-search"
+        type="text"
+        placeholder="Filter models…"
+        value={filter}
+        onChange={e => setFilter(e.target.value)}
+      />
+      {filtered.map(([model, rows]) => (
+        <div key={model} className="model-group">
+          <div className="model-group-name">{model}</div>
+          <table className="sales-table">
+            <thead>
+              <tr><th>Year</th><th>Trade-In</th><th>Private Party</th><th>Dealer Retail</th><th>MSRP</th></tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i}>
+                  <td style={{fontWeight:700, color:"#f0f4e8"}}>{r.year}</td>
+                  <td>{r.trade_in_low ? `$${r.trade_in_low.toLocaleString()} – $${r.trade_in_high.toLocaleString()}` : "—"}</td>
+                  <td style={{color:"var(--accent-light)", fontWeight:600}}>
+                    {r.private_low ? `$${r.private_low.toLocaleString()} – $${r.private_high.toLocaleString()}` : "—"}
+                  </td>
+                  <td>{r.retail_low ? `$${r.retail_low.toLocaleString()} – $${r.retail_high.toLocaleString()}` : "—"}</td>
+                  <td style={{color:"var(--text-muted)"}}>{r.msrp ? `$${r.msrp.toLocaleString()}` : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
     </div>
   );
 }
@@ -271,11 +319,13 @@ function ResultsView({ itemData, asking, setAsking }) {
 
       {itemData.kbbReference && <KbbCard kbbRef={itemData.kbbReference} />}
 
+      <ModelsTable models={itemData.models} />
+
       {s.sources && (
         <div className="source-bar">
           {Object.entries(s.sources).map(([src, cnt]) => (
             <span key={src} className={`source-tag source-${src}`}>
-              {{ bringatrailer: "Bring a Trailer", ebay: "eBay", cycletrader: "Cycle Trader", craigslist: "Craigslist" }[src] || src} — {cnt}
+              {{ bringatrailer: "Bring a Trailer", ebay: "eBay", cycletrader: "Cycle Trader", craigslist: "Craigslist", kbb: "KBB" }[src] || src} — {cnt}
             </span>
           ))}
           {s.outliersRemoved > 0 && <span className="outlier-note">{s.outliersRemoved} outliers removed</span>}

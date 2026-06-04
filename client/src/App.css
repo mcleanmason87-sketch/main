@@ -672,6 +672,7 @@
 .source-bringatrailer{ background: rgba(245,166,35,0.1);  color: var(--yellow);        border: 1px solid rgba(245,166,35,0.2); }
 .source-ebay         { background: rgba(106,191,64,0.1);  color: var(--green);         border: 1px solid rgba(106,191,64,0.2); }
 .source-cycletrader  { background: rgba(200,134,10,0.12); color: var(--accent2-light); border: 1px solid rgba(200,134,10,0.25); }
+.source-kbb          { background: rgba(245,166,35,0.12); color: var(--yellow);        border: 1px solid rgba(245,166,35,0.25); }
 
 .outlier-note { font-size: 0.7rem; color: var(--text-muted); margin-left: auto; }
 
@@ -993,6 +994,39 @@
   color: var(--text-muted);
   margin-top: 0.85rem;
   line-height: 1.4;
+}
+
+/* ── Model search & groups ────────────────────────────────────── */
+.model-search {
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: #f0f4e8;
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.85rem;
+  outline: none;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s;
+}
+.model-search:focus { border-color: var(--accent); }
+.model-search::placeholder { color: var(--text-muted); }
+
+.model-group { margin-bottom: 1.5rem; }
+.model-group:last-child { margin-bottom: 0; }
+
+.model-group-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-light);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(90,138,46,0.2);
+  font-family: "Barlow Condensed", "Inter", sans-serif;
 }
 
 /* ── Responsive ───────────────────────────────────────────────── */

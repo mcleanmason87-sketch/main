@@ -221,11 +221,19 @@ app.post("/api/kbb/scrape", (req, res) => {
   kbb.scrape().catch(console.error);
 });
 
-// ── Brand search in listings ──────────────────────────────────────────────────
+// ── Brand search — KBB-first, falls back to listings ─────────────────────────
 app.get("/api/brand/:brand", (req, res) => {
   const brand = decodeURIComponent(req.params.brand);
   const term = `%${brand}%`;
 
+  // Pull all KBB entries for this brand
+  const kbbRows = db.prepare(`
+    SELECT * FROM kbb_values
+    WHERE make LIKE ?
+    ORDER BY year DESC
+  `).all(term);
+
+  // Also check live listings
   const listings = db.prepare(`
     SELECT * FROM listings
     WHERE title LIKE ?
@@ -235,18 +243,66 @@ app.get("/api/brand/:brand", (req, res) => {
     LIMIT 500
   `).all(term);
 
-  if (!listings.length) return res.status(404).json({ error: `No listings found for ${brand}` });
+  // Need at least KBB data or live listings
+  if (!kbbRows.length && !listings.length) {
+    return res.status(404).json({ error: `No data found for ${brand}` });
+  }
 
-  const stats = computeStats(listings);
+  // Build stats from KBB private-party values (most accurate for resale)
+  let stats;
+  if (kbbRows.length > 0) {
+    const prices = kbbRows
+      .flatMap(r => [r.private_low, r.private_high].filter(Boolean));
+    prices.sort((a, b) => a - b);
+    const mid = Math.floor(prices.length / 2);
+    const median = prices.length % 2 === 0
+      ? (prices[mid - 1] + prices[mid]) / 2
+      : prices[mid];
+    const avg = prices.reduce((s, p) => s + p, 0) / prices.length;
+    const p25 = prices[Math.floor(prices.length * 0.25)] || prices[0];
+    const p75 = prices[Math.floor(prices.length * 0.75)] || prices[prices.length - 1];
+    // Fair range = average of all private_low to average of all private_high
+    const avgLow  = Math.round(kbbRows.filter(r => r.private_low).reduce((s, r) => s + r.private_low,  0) / kbbRows.filter(r => r.private_low).length);
+    const avgHigh = Math.round(kbbRows.filter(r => r.private_high).reduce((s, r) => s + r.private_high, 0) / kbbRows.filter(r => r.private_high).length);
 
-  // KBB reference for this brand
-  const kbbRef = db.prepare(`
-    SELECT ROUND(AVG(private_low), 0) as avg_kbb_low,
-           ROUND(AVG(private_high), 0) as avg_kbb_high,
-           COUNT(*) as kbb_count
+    stats = {
+      count: kbbRows.length,
+      weightedAvg: Math.round(avg),
+      median: Math.round(median),
+      low: prices[0],
+      high: prices[prices.length - 1],
+      p25: Math.round(p25),
+      p75: Math.round(p75),
+      fairLow: avgLow,
+      fairHigh: avgHigh,
+      trend: "stable",
+      outliersRemoved: 0,
+      sources: { kbb: kbbRows.length },
+    };
+  } else {
+    stats = computeStats(listings);
+  }
+
+  // KBB summary card
+  const kbbRows_valid = kbbRows.filter(r => r.private_low && r.private_high);
+  const kbbReference = kbbRows_valid.length > 0 ? {
+    avg_kbb_low:  Math.round(kbbRows_valid.reduce((s, r) => s + r.private_low,  0) / kbbRows_valid.length),
+    avg_kbb_high: Math.round(kbbRows_valid.reduce((s, r) => s + r.private_high, 0) / kbbRows_valid.length),
+    trade_in_low:  kbbRows.find(r => r.trade_in_low)  ? Math.round(kbbRows.filter(r => r.trade_in_low).reduce((s, r) => s + r.trade_in_low,  0) / kbbRows.filter(r => r.trade_in_low).length)  : null,
+    trade_in_high: kbbRows.find(r => r.trade_in_high) ? Math.round(kbbRows.filter(r => r.trade_in_high).reduce((s, r) => s + r.trade_in_high, 0) / kbbRows.filter(r => r.trade_in_high).length) : null,
+    retail_low:  kbbRows.find(r => r.retail_low)  ? Math.round(kbbRows.filter(r => r.retail_low).reduce((s, r) => s + r.retail_low,  0) / kbbRows.filter(r => r.retail_low).length)  : null,
+    retail_high: kbbRows.find(r => r.retail_high) ? Math.round(kbbRows.filter(r => r.retail_high).reduce((s, r) => s + r.retail_high, 0) / kbbRows.filter(r => r.retail_high).length) : null,
+    kbb_count: kbbRows.length,
+  } : null;
+
+  // Model breakdown for this brand
+  const models = db.prepare(`
+    SELECT model, year, trim, private_low, private_high, trade_in_low, trade_in_high, retail_low, retail_high, msrp, kbb_url
     FROM kbb_values WHERE make LIKE ?
-  `).get(term);
+    ORDER BY model ASC, year DESC
+  `).all(term);
 
+  // Recent live sales if any
   const recentSales = listings.slice(0, 30).map((l) => ({
     date: (l.listed_at || l.scraped_at || "").split(" ")[0],
     price: l.price, title: l.title, condition: l.condition,
@@ -257,7 +313,8 @@ app.get("/api/brand/:brand", (req, res) => {
     brand,
     image: "🏍️",
     stats,
-    kbbReference: kbbRef?.kbb_count > 0 ? kbbRef : null,
+    kbbReference,
+    models,
     sales: recentSales,
   });
 });
