@@ -28,8 +28,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_listings_category   ON listings(category);
   CREATE INDEX IF NOT EXISTS idx_listings_source     ON listings(source);
   CREATE INDEX IF NOT EXISTS idx_listings_first_seen ON listings(first_seen_at);
-  CREATE UNIQUE INDEX IF NOT EXISTS idx_listings_source_id ON listings(source, source_id)
-    WHERE source_id IS NOT NULL;
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_listings_source_id ON listings(source, source_id);
 
   CREATE TABLE IF NOT EXISTS scrape_log (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,

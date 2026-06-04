@@ -68,7 +68,7 @@ async function scrapeMetroCategory(metro, target, offset = 0) {
 
       results.push({
         source: "craigslist",
-        source_id: sourceId,
+        source_id: sourceId || `cl-${metro}-${title.slice(0,30)}-${price}`.replace(/\s+/g, "-"),
         title,
         price,
         category: target.category,
