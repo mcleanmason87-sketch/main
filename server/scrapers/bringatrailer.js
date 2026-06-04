@@ -139,12 +139,12 @@ async function scrape() {
 
       if (hitCutoff || results.length === 0) break;
       page++;
-      await sleep(1200 + Math.random() * 800);
+      await sleep(300 + Math.random() * 200);
     }
 
     log.run("bringatrailer", target.category, "ok", categoryCount, null);
     console.log(`[bringatrailer] "${target.query}": ${categoryCount} historical sales`);
-    await sleep(1000 + Math.random() * 500);
+    await sleep(300 + Math.random() * 200);
   }
 
   console.log(`[bringatrailer] Done. ${total} historical sales saved.`);

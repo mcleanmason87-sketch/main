@@ -141,7 +141,8 @@ app.get("/api/status", (req, res) => {
   const log = db.prepare("SELECT * FROM scrape_log ORDER BY ran_at DESC LIMIT 30").all();
   const counts = db.prepare("SELECT source, COUNT(*) as total FROM listings GROUP BY source").all();
   const total = counts.reduce((s, c) => s + c.total, 0);
-  res.json({ log, counts, total });
+  const byCategory = db.prepare("SELECT category, COUNT(*) as total FROM listings GROUP BY category").all();
+  res.json({ log, counts, total, byCategory });
 });
 
 // ── Manual scrape trigger ─────────────────────────────────────────────────────

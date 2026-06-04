@@ -121,10 +121,10 @@ async function scrape() {
         if (!hasMore) break;
         offset += 30;
         pages++;
-        await sleep(600 + Math.random() * 400);
+        await sleep(200 + Math.random() * 150);
       }
 
-      await sleep(700 + Math.random() * 500);
+      await sleep(250 + Math.random() * 150);
     }
 
     log.run("craigslist", target.category, "ok", categoryCount, null);
