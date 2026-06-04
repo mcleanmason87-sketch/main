@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const db = require("./db");
 const { computeStats } = require("./pricing");
+const { predict } = require("./prediction");
 const scheduler = require("./scheduler");
 
 const app = express();
@@ -143,6 +144,22 @@ app.get("/api/status", (req, res) => {
   const total = counts.reduce((s, c) => s + c.total, 0);
   const byCategory = db.prepare("SELECT category, COUNT(*) as total FROM listings GROUP BY category").all();
   res.json({ log, counts, total, byCategory });
+});
+
+// ── Market prediction ─────────────────────────────────────────────────────────
+app.get("/api/predict", (req, res) => {
+  const { category, subcategory, age, condition, mileage } = req.query;
+  if (!category) return res.status(400).json({ error: "category required" });
+
+  const result = predict({
+    category,
+    subcategory: subcategory || null,
+    age: parseFloat(age) || 0,
+    condition: condition || "Good",
+    mileage: mileage ? parseFloat(mileage) : null,
+  });
+
+  res.json(result);
 });
 
 // ── Manual scrape trigger ─────────────────────────────────────────────────────

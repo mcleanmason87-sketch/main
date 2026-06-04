@@ -12,6 +12,108 @@ function useDebounce(value, delay) {
   return debounced;
 }
 
+function PredictionPanel({ category, subcategory }) {
+  const [age, setAge] = useState("");
+  const [condition, setCondition] = useState("Good");
+  const [mileage, setMileage] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  function runPrediction() {
+    if (!age) return;
+    setLoading(true);
+    const params = new URLSearchParams({ category, age, condition });
+    if (subcategory) params.set("subcategory", subcategory);
+    if (mileage) params.set("mileage", mileage);
+    fetch(`${API}/predict?${params}`)
+      .then((r) => r.json())
+      .then((d) => { setResult(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }
+
+  const isBoat = category === "Boats";
+
+  return (
+    <div className="card prediction-card">
+      <h3>Market Value Predictor</h3>
+      <p className="card-sub">Enter the vehicle details to get a depreciation-adjusted value estimate and future projections.</p>
+
+      <div className="predict-form">
+        <div className="predict-field">
+          <label>Age (years)</label>
+          <input className="predict-input" type="number" min="0" max="30" placeholder="e.g. 3" value={age} onChange={(e) => setAge(e.target.value)} />
+        </div>
+        <div className="predict-field">
+          <label>{isBoat ? "Hours" : "Miles"} <span className="optional">(optional)</span></label>
+          <input className="predict-input" type="number" min="0" placeholder={isBoat ? "e.g. 150" : "e.g. 12000"} value={mileage} onChange={(e) => setMileage(e.target.value)} />
+        </div>
+        <div className="predict-field">
+          <label>Condition</label>
+          <select className="predict-select" value={condition} onChange={(e) => setCondition(e.target.value)}>
+            <option>New</option>
+            <option>Excellent</option>
+            <option>Good</option>
+            <option>Fair</option>
+            <option>Poor</option>
+          </select>
+        </div>
+        <button className="predict-btn" onClick={runPrediction} disabled={!age || loading}>
+          {loading ? "Calculating…" : "Predict Value"}
+        </button>
+      </div>
+
+      {result && !result.error && (
+        <div className="predict-results">
+          <div className="predict-current">
+            <div className="predict-value-label">Estimated Current Value</div>
+            <div className="predict-value">${result.currentValue.toLocaleString()}</div>
+            <div className="predict-meta">
+              Based on {result.basedOn} real listings · {result.confidence}% confidence
+            </div>
+          </div>
+
+          <div className="predict-projections">
+            {result.projections.map((p) => (
+              <div key={p.label} className="projection-card">
+                <div className="proj-label">{p.label}</div>
+                <div className="proj-value">${p.value.toLocaleString()}</div>
+                <div className={`proj-change ${p.change < 0 ? "neg" : "pos"}`}>
+                  {p.change < 0 ? "▼" : "▲"} ${Math.abs(p.change).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="predict-stats">
+            <div className="pstat">
+              <span className="pstat-label">Annual depreciation</span>
+              <span className="pstat-val neg">−${result.annualLoss.toLocaleString()} ({result.annualLossPct}%/yr)</span>
+            </div>
+            <div className="pstat">
+              <span className="pstat-label">Category depreciation rate</span>
+              <span className="pstat-val">{result.depreciationRate}% per year</span>
+            </div>
+            <div className="pstat">
+              <span className="pstat-label">Seasonal market index</span>
+              <span className="pstat-val">{result.seasonalIndex > 100 ? "↑" : result.seasonalIndex < 100 ? "↓" : "→"} {result.seasonalIndex}%</span>
+            </div>
+            <div className="pstat">
+              <span className="pstat-label">Market trend</span>
+              <span className="pstat-val">{result.trend}</span>
+            </div>
+          </div>
+
+          <div className={`sell-advice ${result.trend === "falling" ? "advice-warn" : result.trend === "rising" ? "advice-good" : "advice-neutral"}`}>
+            💡 {result.sellAdvice}
+          </div>
+        </div>
+      )}
+
+      {result?.error && <p className="predict-error">{result.error}</p>}
+    </div>
+  );
+}
+
 function TrendBadge({ trend }) {
   const map = {
     rising:  { label: "↑ Rising",  cls: "trend-rising" },
@@ -281,6 +383,8 @@ export default function App() {
                 </div>
                 <VerdictBox fairLow={s.fairLow} fairHigh={s.fairHigh} asking={asking} />
               </div>
+
+              <PredictionPanel category={itemData.category} subcategory={itemData.subcategory} />
 
               <div className="card">
                 <h3>Recent Listings</h3>
