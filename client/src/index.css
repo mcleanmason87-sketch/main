@@ -1,33 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Inter:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@layer base {
+  :root {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 96%;
+    --primary: 119 99% 46%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 119 99% 46%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 0 84% 60%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 119 99% 46%;
+    --radius: 0.5rem;
+    --nav-button: 0 0% 18%;
+    --hero-bg: 0 0% 8%;
+  }
 
-body {
-  font-family: "Inter", system-ui, sans-serif;
-  background: #080b06;
-  color: #d4d9c4;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+  * {
+    border-color: hsl(var(--border));
+    box-sizing: border-box;
+  }
 
-:root {
-  --green:         #6abf40;
-  --green-bright:  #8fdc50;
-  --green-glow:    rgba(106,191,64,0.25);
-  --green-deep:    #3a7020;
-  --orange:        #e8820a;
-  --orange-light:  #f5a623;
-  --orange-glow:   rgba(232,130,10,0.3);
-  --surface:       rgba(255,255,255,0.035);
-  --surface2:      rgba(255,255,255,0.06);
-  --border:        rgba(255,255,255,0.07);
-  --border-strong: rgba(255,255,255,0.13);
-  --text-muted:    #686e58;
-  --red:           #e05050;
-  --yellow:        #f5a623;
-  --camo1: #0f1409;
-  --camo2: #1a2010;
-  --camo3: #252f16;
-  --camo4: #30391e;
-  --camo5: #3d4f26;
+  body {
+    @apply font-sora antialiased bg-hero-bg text-foreground;
+    margin: 0;
+    padding: 0;
+  }
 }

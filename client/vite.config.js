@@ -1,8 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import path from "path";
 
 export default defineConfig({
+  resolve: {
+    alias: { "@": path.resolve(__dirname, "./src") },
+  },
   plugins: [
     react(),
     VitePWA({
@@ -11,17 +15,14 @@ export default defineConfig({
       manifest: {
         name: "MotoValue — Know Your Ride's Worth",
         short_name: "MotoValue",
-        description: "Real KBB motorcycle prices, private party ranges, and resale values for every major brand.",
-        theme_color: "#080b06",
-        background_color: "#080b06",
+        theme_color: "#1a1a1a",
+        background_color: "#141414",
         display: "standalone",
-        orientation: "portrait-primary",
         start_url: "/",
         icons: [
           { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
           { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
         ],
-        categories: ["lifestyle", "utilities", "finance"],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
@@ -29,23 +30,17 @@ export default defineConfig({
           {
             urlPattern: /^\/api\//,
             handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
-            },
+            options: { cacheName: "api-cache", expiration: { maxEntries: 50, maxAgeSeconds: 86400 } },
           },
           {
             urlPattern: /^https:\/\/images\.unsplash\.com\//,
             handler: "CacheFirst",
-            options: {
-              cacheName: "image-cache",
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 7 },
-            },
+            options: { cacheName: "image-cache", expiration: { maxEntries: 30, maxAgeSeconds: 604800 } },
           },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\//,
             handler: "CacheFirst",
-            options: { cacheName: "font-cache", expiration: { maxAgeSeconds: 60 * 60 * 24 * 30 } },
+            options: { cacheName: "font-cache", expiration: { maxAgeSeconds: 2592000 } },
           },
         ],
       },
