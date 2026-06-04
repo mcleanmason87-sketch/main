@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const db = require("./db");
 const { computeStats } = require("./pricing");
 const { predict } = require("./prediction");
@@ -8,6 +9,10 @@ const scheduler = require("./scheduler");
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve built React app in production
+const DIST = path.join(__dirname, "../client/dist");
+app.use(express.static(DIST));
 
 function categoryIcon(cat = "", sub = "") {
   if (cat === "Motorcycles") return "🏍️";
@@ -325,7 +330,12 @@ app.post("/api/scrape", (req, res) => {
   scheduler.runAll();
 });
 
+// ── Serve React app for all non-API routes ────────────────────────────────────
+app.get("*", (req, res) => {
+  res.sendFile(path.join(DIST, "index.html"));
+});
+
 scheduler.start();
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
