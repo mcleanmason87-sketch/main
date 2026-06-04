@@ -1,97 +1,97 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./db");
+const { computeStats } = require("./pricing");
 const scheduler = require("./scheduler");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ── Search listings by keyword ────────────────────────────────────────────────
+function categoryIcon(cat = "") {
+  return { "Motorcycles": "🏍️", "Boats": "⛵", "RVs & Campers": "🚐", "Powersports": "🛷" }[cat] || "🏷️";
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
 app.get("/api/search", (req, res) => {
   const { q } = req.query;
   if (!q || q.trim().length < 2) return res.json({ results: [] });
-
   const term = `%${q.trim()}%`;
 
   const rows = db.prepare(`
     SELECT category, subcategory,
            COUNT(*) as count,
-           ROUND(AVG(price), 0) as avg_price,
-           MIN(price) as min_price,
-           MAX(price) as max_price
+           ROUND(AVG(price), 0) as avg_price
     FROM listings
-    WHERE title LIKE ? OR category LIKE ? OR subcategory LIKE ?
+    WHERE (title LIKE ? OR category LIKE ? OR subcategory LIKE ?)
+      AND scraped_at >= datetime('now', '-180 days')
     GROUP BY category, subcategory
     ORDER BY count DESC
     LIMIT 12
   `).all(term, term, term);
 
-  const results = rows.map((r) => ({
-    key: `${r.category}__${r.subcategory || ""}`,
-    name: r.subcategory ? `${r.category} — ${r.subcategory}` : r.category,
-    category: r.category,
-    subcategory: r.subcategory,
-    count: r.count,
-    avgPrice: r.avg_price,
-    image: categoryIcon(r.category),
-  }));
-
-  res.json({ results });
+  res.json({
+    results: rows.map((r) => ({
+      key: `${r.category}__${r.subcategory || ""}`,
+      name: r.subcategory ? `${r.category} — ${r.subcategory}` : r.category,
+      category: r.category,
+      subcategory: r.subcategory,
+      count: r.count,
+      avgPrice: r.avg_price,
+      image: categoryIcon(r.category),
+    })),
+  });
 });
 
-// ── Full price stats for a category/subcategory ───────────────────────────────
+// ── Category price data ───────────────────────────────────────────────────────
 app.get("/api/category", (req, res) => {
-  const { category, subcategory, q } = req.query;
+  const { category, subcategory } = req.query;
+  if (!category) return res.status(400).json({ error: "category required" });
 
-  let rows;
-  if (q) {
-    const term = `%${q.trim()}%`;
-    rows = db.prepare(`
-      SELECT * FROM listings
-      WHERE (title LIKE ? OR category LIKE ?)
-        AND scraped_at >= datetime('now', '-30 days')
-      ORDER BY scraped_at DESC
-      LIMIT 200
-    `).all(term, term);
-  } else if (subcategory) {
-    rows = db.prepare(`
-      SELECT * FROM listings
-      WHERE category = ? AND subcategory = ?
-        AND scraped_at >= datetime('now', '-30 days')
-      ORDER BY scraped_at DESC
-      LIMIT 200
-    `).all(category, subcategory);
-  } else {
-    rows = db.prepare(`
-      SELECT * FROM listings
-      WHERE category = ?
-        AND scraped_at >= datetime('now', '-30 days')
-      ORDER BY scraped_at DESC
-      LIMIT 200
-    `).all(category);
-  }
+  // Pull 6 months of data
+  const listings = subcategory
+    ? db.prepare(`
+        SELECT * FROM listings
+        WHERE category = ? AND subcategory = ?
+          AND scraped_at >= datetime('now', '-180 days')
+        ORDER BY scraped_at DESC
+        LIMIT 500
+      `).all(category, subcategory)
+    : db.prepare(`
+        SELECT * FROM listings
+        WHERE category = ?
+          AND scraped_at >= datetime('now', '-180 days')
+        ORDER BY scraped_at DESC
+        LIMIT 500
+      `).all(category);
 
-  if (!rows.length) return res.status(404).json({ error: "No listings found" });
+  if (!listings.length) return res.status(404).json({ error: "No listings found yet — scrape may still be running." });
 
-  const prices = rows.map((r) => r.price).sort((a, b) => a - b);
-  const avg = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
-  const median = prices[Math.floor(prices.length / 2)];
-  const low = prices[0];
-  const high = prices[prices.length - 1];
+  const stats = computeStats(listings);
 
-  // Use median ± 15% as fair range (more robust than avg for vehicles)
-  const fairLow = Math.round(median * 0.85);
-  const fairHigh = Math.round(median * 1.15);
+  // Trend buckets for sparkline: weekly avg over last 24 weeks
+  const buckets = db.prepare(`
+    SELECT
+      strftime('%Y-W%W', scraped_at) as week,
+      ROUND(AVG(price), 0) as avg_price,
+      COUNT(*) as count
+    FROM listings
+    WHERE category = ?
+      ${subcategory ? "AND subcategory = ?" : ""}
+      AND scraped_at >= datetime('now', '-180 days')
+    GROUP BY week
+    ORDER BY week ASC
+  `).all(...(subcategory ? [category, subcategory] : [category]));
 
-  const recentSales = rows.slice(0, 20).map((r) => ({
-    date: r.scraped_at.split(" ")[0],
-    price: r.price,
-    title: r.title,
-    condition: r.condition,
-    location: r.location,
-    source: r.source,
-    url: r.url,
+  const recentSales = listings.slice(0, 25).map((l) => ({
+    date: (l.listed_at || l.scraped_at || "").split(" ")[0],
+    price: l.price,
+    title: l.title,
+    condition: l.condition,
+    location: l.location,
+    source: l.source,
+    url: l.url,
+    sold: !!l.sold,
   }));
 
   res.json({
@@ -99,27 +99,26 @@ app.get("/api/category", (req, res) => {
     category,
     subcategory,
     image: categoryIcon(category),
-    stats: { avg, median, low, high, fairLow, fairHigh, count: prices.length },
+    stats,
+    trendBuckets: buckets,
     sales: recentSales,
   });
 });
 
-// ── Browse by category ────────────────────────────────────────────────────────
+// ── Browse ────────────────────────────────────────────────────────────────────
 app.get("/api/browse", (req, res) => {
   const rows = db.prepare(`
     SELECT category, subcategory,
            COUNT(*) as count,
            ROUND(AVG(price), 0) as avg_price,
            MIN(price) as min_price,
-           MAX(price) as max_price,
-           MAX(scraped_at) as last_seen
+           MAX(price) as max_price
     FROM listings
-    WHERE scraped_at >= datetime('now', '-30 days')
+    WHERE scraped_at >= datetime('now', '-180 days')
     GROUP BY category, subcategory
     ORDER BY category, subcategory
   `).all();
 
-  // Group by category
   const grouped = {};
   for (const row of rows) {
     if (!grouped[row.category]) {
@@ -137,39 +136,21 @@ app.get("/api/browse", (req, res) => {
   res.json({ categories: Object.values(grouped) });
 });
 
-// ── Scrape status / log ───────────────────────────────────────────────────────
+// ── Status ────────────────────────────────────────────────────────────────────
 app.get("/api/status", (req, res) => {
-  const log = db.prepare(`
-    SELECT * FROM scrape_log ORDER BY ran_at DESC LIMIT 20
-  `).all();
-
-  const counts = db.prepare(`
-    SELECT source, COUNT(*) as total FROM listings GROUP BY source
-  `).all();
-
-  res.json({ log, counts });
+  const log = db.prepare("SELECT * FROM scrape_log ORDER BY ran_at DESC LIMIT 30").all();
+  const counts = db.prepare("SELECT source, COUNT(*) as total FROM listings GROUP BY source").all();
+  const total = counts.reduce((s, c) => s + c.total, 0);
+  res.json({ log, counts, total });
 });
 
-// ── Trigger a manual scrape ───────────────────────────────────────────────────
-app.post("/api/scrape", async (req, res) => {
-  res.json({ message: "Scrape started in background" });
+// ── Manual scrape trigger ─────────────────────────────────────────────────────
+app.post("/api/scrape", (req, res) => {
+  res.json({ message: "Scrape started" });
   scheduler.runAll();
 });
 
-function categoryIcon(cat = "") {
-  const map = {
-    "Motorcycles": "🏍️",
-    "Boats": "⛵",
-    "RVs & Campers": "🚐",
-    "Powersports": "🛷",
-  };
-  return map[cat] || "🏷️";
-}
-
-// Start the scrape scheduler
 scheduler.start();
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

@@ -2,7 +2,6 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const db = require("../db");
 
-// Craigslist category codes for resale vehicles/powersports
 const TARGETS = [
   { code: "mca", category: "Motorcycles",    subcategory: "Street / Cruiser" },
   { code: "atv", category: "Motorcycles",    subcategory: "ATV / UTV / Dirt Bike" },
@@ -12,11 +11,12 @@ const TARGETS = [
   { code: "snw", category: "Powersports",    subcategory: "Snowmobile" },
 ];
 
-// Major metro areas to scrape — covers most of the US market
 const METROS = [
   "sfbay", "losangeles", "newyork", "chicago", "dallas",
   "houston", "phoenix", "miami", "seattle", "denver",
   "atlanta", "boston", "sandiego", "portland", "minneapolis",
+  "detroit", "nashville", "austin", "tampa", "charlotte",
+  "indianapolis", "columbus", "lasvegas", "saltlakecity", "kansascity",
 ];
 
 const HEADERS = {
@@ -24,55 +24,47 @@ const HEADERS = {
   "Accept-Language": "en-US,en;q=0.9",
 };
 
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
 function parsePrice(text) {
   if (!text) return null;
-  const match = text.replace(/,/g, "").match(/\$?([\d]+)/);
-  return match ? parseFloat(match[1]) : null;
+  const m = text.replace(/,/g, "").match(/\$?([\d]+)/);
+  return m ? parseFloat(m[1]) : null;
 }
 
 function inferCondition(title = "") {
   const t = title.toLowerCase();
-  if (t.includes("new") || t.includes("brand new") || t.includes("0 miles") || t.includes("never")) return "New";
+  if (t.includes("new") || t.includes("brand new") || t.includes("never") || t.includes("0 miles")) return "New";
   if (t.includes("excellent") || t.includes("mint") || t.includes("perfect")) return "Excellent";
-  if (t.includes("good") || t.includes("runs great") || t.includes("runs well")) return "Good";
-  if (t.includes("fair") || t.includes("project") || t.includes("needs") || t.includes("parts")) return "Fair";
+  if (t.includes("good") || t.includes("runs great") || t.includes("runs well") || t.includes("clean")) return "Good";
+  if (t.includes("fair") || t.includes("project") || t.includes("needs") || t.includes("parts") || t.includes("damage")) return "Fair";
   return "Good";
 }
 
-async function scrapeMetroCategory(metro, target) {
-  const url = `https://${metro}.craigslist.org/search/${target.code}?sort=date&limit=30`;
+async function scrapeMetroCategory(metro, target, offset = 0) {
+  const url = `https://${metro}.craigslist.org/search/${target.code}?sort=date&s=${offset}`;
   const results = [];
 
   try {
     const { data } = await axios.get(url, { headers: HEADERS, timeout: 12000 });
     const $ = cheerio.load(data);
+    let hasMore = false;
 
     $("li.cl-search-result, li.result-row").each((_, el) => {
       const $el = $(el);
-
-      // Support both old and new Craigslist markup
       const title =
         $el.find(".cl-app-anchor .label, .result-title").first().text().trim() ||
         $el.find("a.cl-app-anchor").attr("title") || "";
-
-      const priceText =
-        $el.find(".priceinfo, .result-price").first().text().trim();
-
+      const priceText = $el.find(".priceinfo, .result-price").first().text().trim();
       const price = parsePrice(priceText);
-      if (!price || price < 500 || price > 500000) return; // filter junk
+      if (!price || price < 500 || price > 500000) return;
 
-      const href =
-        $el.find("a.cl-app-anchor, a.result-title").first().attr("href") || "";
-
+      const href = $el.find("a.cl-app-anchor, a.result-title").first().attr("href") || "";
       const sourceId = href.match(/(\d{10,})/)?.[1] || null;
-      const location =
-        $el.find(".meta .separator ~ span, .result-hood").first().text().replace(/[()]/g, "").trim() || metro;
+      const location = $el.find(".meta .separator ~ span, .result-hood").first().text().replace(/[()]/g, "").trim() || metro;
 
       if (!title || title.length < 5) return;
+      hasMore = true;
 
       results.push({
         source: "craigslist",
@@ -86,11 +78,11 @@ async function scrapeMetroCategory(metro, target) {
         url: href.startsWith("http") ? href : `https://${metro}.craigslist.org${href}`,
       });
     });
-  } catch (err) {
-    // Network errors per metro are expected — just skip
-  }
 
-  return results;
+    return { results, hasMore: hasMore && results.length >= 25 };
+  } catch {
+    return { results: [], hasMore: false };
+  }
 }
 
 const insert = db.prepare(`
@@ -107,27 +99,35 @@ const log = db.prepare(`
 `);
 
 async function scrape() {
-  console.log("[craigslist] Starting scrape…");
+  console.log("[craigslist] Starting scrape across 25 metros…");
   let total = 0;
 
   for (const target of TARGETS) {
     let categoryCount = 0;
 
     for (const metro of METROS) {
-      const listings = await scrapeMetroCategory(metro, target);
+      let offset = 0;
+      let pages = 0;
 
-      const insertMany = db.transaction((rows) => {
-        for (const row of rows) insert.run(row);
-      });
-      insertMany(listings);
-      categoryCount += listings.length;
-      total += listings.length;
+      while (pages < 3) { // up to 3 pages (75–120 results) per metro
+        const { results, hasMore } = await scrapeMetroCategory(metro, target, offset);
 
-      await sleep(800 + Math.random() * 600); // polite delay between requests
+        const insertMany = db.transaction((rows) => { for (const r of rows) insert.run(r); });
+        insertMany(results);
+        categoryCount += results.length;
+        total += results.length;
+
+        if (!hasMore) break;
+        offset += 30;
+        pages++;
+        await sleep(600 + Math.random() * 400);
+      }
+
+      await sleep(700 + Math.random() * 500);
     }
 
     log.run("craigslist", target.category, "ok", categoryCount, null);
-    console.log(`[craigslist] ${target.category} (${target.subcategory}): ${categoryCount} listings`);
+    console.log(`[craigslist] ${target.category} / ${target.subcategory}: ${categoryCount} listings`);
   }
 
   console.log(`[craigslist] Done. ${total} total listings saved.`);

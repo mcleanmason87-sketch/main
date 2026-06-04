@@ -12,10 +12,40 @@ function useDebounce(value, delay) {
   return debounced;
 }
 
-function PriceBar({ low, fairLow, fairHigh, high }) {
+function TrendBadge({ trend }) {
+  const map = {
+    rising:  { label: "↑ Rising",  cls: "trend-rising" },
+    falling: { label: "↓ Falling", cls: "trend-falling" },
+    stable:  { label: "→ Stable",  cls: "trend-stable" },
+  };
+  const t = map[trend] || map.stable;
+  return <span className={`trend-badge ${t.cls}`}>{t.label}</span>;
+}
+
+function Sparkline({ buckets }) {
+  if (!buckets || buckets.length < 2) return null;
+  const prices = buckets.map((b) => b.avg_price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min || 1;
+  const W = 200, H = 48, pad = 4;
+
+  const pts = prices.map((p, i) => {
+    const x = pad + (i / (prices.length - 1)) * (W - pad * 2);
+    const y = H - pad - ((p - min) / range) * (H - pad * 2);
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <svg className="sparkline" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+      <polyline points={pts} fill="none" stroke="var(--accent-light)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PriceBar({ low, p25, p75, fairLow, fairHigh, high }) {
   const range = high - low || 1;
-  const fairLowPct = ((fairLow - low) / range) * 100;
-  const fairWidthPct = ((fairHigh - fairLow) / range) * 100;
+  const pct = (v) => `${((v - low) / range) * 100}%`;
   return (
     <div className="price-bar-wrap">
       <div className="price-bar-labels">
@@ -23,10 +53,12 @@ function PriceBar({ low, fairLow, fairHigh, high }) {
         <span>${high.toLocaleString()}</span>
       </div>
       <div className="price-bar-track">
-        <div className="price-bar-fair" style={{ left: `${fairLowPct}%`, width: `${fairWidthPct}%` }} />
+        <div className="price-bar-iqr"  style={{ left: pct(p25),    width: pct(p75 - p25 + low) }} title="25th–75th percentile" />
+        <div className="price-bar-fair" style={{ left: pct(fairLow), width: pct(fairHigh - fairLow + low) }} title={`Fair: $${fairLow.toLocaleString()}–$${fairHigh.toLocaleString()}`} />
       </div>
       <div className="price-bar-legend">
-        <span className="legend-dot fair" /> Fair price range (±15% of median)
+        <span className="legend-dot fair" /> Fair range &nbsp;
+        <span className="legend-dot iqr"  /> Middle 50%
       </div>
     </div>
   );
@@ -37,6 +69,15 @@ function ConditionBadge({ condition }) {
   return <span className={`badge ${map[condition] || "badge-good"}`}>{condition}</span>;
 }
 
+function SourceTag({ source, sold }) {
+  const labels = { bringatrailer: "Bring a Trailer", ebay: "eBay", craigslist: "Craigslist" };
+  return (
+    <span className={`source-tag source-${source}`}>
+      {labels[source] || source}{sold ? " ✓" : ""}
+    </span>
+  );
+}
+
 function VerdictBox({ fairLow, fairHigh, asking }) {
   if (!asking) return null;
   const price = parseFloat(asking);
@@ -44,13 +85,13 @@ function VerdictBox({ fairLow, fairHigh, asking }) {
   let verdict, cls, icon, msg;
   if (price <= fairLow) {
     verdict = "Great Deal"; cls = "verdict-great"; icon = "🟢";
-    msg = `$${(fairLow - price).toLocaleString()} below the fair range — solid buy.`;
+    msg = `$${(fairLow - price).toLocaleString()} below fair range — solid buy.`;
   } else if (price <= fairHigh) {
     verdict = "Fair Price"; cls = "verdict-fair"; icon = "🟡";
     msg = "Right in the fair range. Reasonable deal.";
   } else {
     verdict = "Overpriced"; cls = "verdict-over"; icon = "🔴";
-    msg = `$${(price - fairHigh).toLocaleString()} above fair range. Try negotiating down.`;
+    msg = `$${(price - fairHigh).toLocaleString()} above fair range. Try negotiating down to $${fairHigh.toLocaleString()}.`;
   }
   return (
     <div className={`verdict-box ${cls}`}>
@@ -64,13 +105,13 @@ function VerdictBox({ fairLow, fairHigh, asking }) {
 }
 
 const BROWSE_CHIPS = [
-  { label: "🏍️ Motorcycles",      category: "Motorcycles",  subcategory: "Street / Cruiser" },
-  { label: "🏍️ Sport Bikes",      category: "Motorcycles",  subcategory: "Sport Bike" },
-  { label: "🏍️ ATVs & UTVs",      category: "Motorcycles",  subcategory: "ATV / UTV / Dirt Bike" },
-  { label: "⛵ Powerboats",        category: "Boats",        subcategory: "Powerboat" },
-  { label: "⛵ Jet Skis",          category: "Boats",        subcategory: "Jet Ski / PWC" },
-  { label: "⛵ Wake Boats",        category: "Boats",        subcategory: "Wakeboard Boat" },
-  { label: "🚐 RVs & Campers",    category: "RVs & Campers", subcategory: null },
+  { label: "🏍️ Street Motorcycles", category: "Motorcycles",   subcategory: "Street / Cruiser" },
+  { label: "🏍️ Sport Bikes",        category: "Motorcycles",   subcategory: "Sport Bike" },
+  { label: "🏍️ ATVs & UTVs",        category: "Motorcycles",   subcategory: "ATV / UTV / Dirt Bike" },
+  { label: "⛵ Powerboats",          category: "Boats",         subcategory: "Powerboat" },
+  { label: "⛵ Jet Skis / PWC",      category: "Boats",         subcategory: "Jet Ski / PWC" },
+  { label: "⛵ Wake Boats",          category: "Boats",         subcategory: "Wakeboard Boat" },
+  { label: "🚐 RVs & Campers",      category: "RVs & Campers", subcategory: "RV / Motorhome" },
 ];
 
 export default function App() {
@@ -80,19 +121,15 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [asking, setAsking] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [dbReady, setDbReady] = useState(null); // null=checking, true/false
+  const [dbStatus, setDbStatus] = useState(null);
   const inputRef = useRef(null);
   const debouncedQuery = useDebounce(query, 250);
 
-  // Check if DB has data yet
   useEffect(() => {
     fetch(`${API}/status`)
       .then((r) => r.json())
-      .then((d) => {
-        const total = d.counts?.reduce((s, c) => s + c.total, 0) || 0;
-        setDbReady(total > 0);
-      })
-      .catch(() => setDbReady(false));
+      .then((d) => setDbStatus(d))
+      .catch(() => setDbStatus({ total: 0 }));
   }, []);
 
   useEffect(() => {
@@ -117,13 +154,8 @@ export default function App() {
       .catch(() => setLoading(false));
   }
 
-  function handleInputChange(e) {
-    setQuery(e.target.value);
-    setShowSuggestions(true);
-    if (!e.target.value) { setItemData(null); }
-  }
-
   const showDrop = showSuggestions && suggestions.length > 0;
+  const totalListings = dbStatus?.total || 0;
 
   return (
     <div className="app">
@@ -132,11 +164,12 @@ export default function App() {
           <div className="logo-badge">
             <span className="logo-dot" />
             PricePulse
+            {totalListings > 0 && <span className="listing-count">{totalListings.toLocaleString()} listings</span>}
           </div>
           <h1>What's it <span>worth?</span></h1>
           <p className="subtitle">
-            Real-time resale prices scraped from Craigslist and eBay — motorcycles,
-            boats, powersports, and more.
+            Real resale prices from Craigslist &amp; Bring a Trailer — weighted by recency,
+            6 months of sales history, outliers removed.
           </p>
 
           <div className="search-wrap">
@@ -147,21 +180,20 @@ export default function App() {
                 type="text"
                 placeholder="Search motorcycles, boats, jet skis…"
                 value={query}
-                onChange={handleInputChange}
+                onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); if (!e.target.value) setItemData(null); }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                 autoComplete="off"
               />
               {query && <button className="clear-btn" onClick={() => { setQuery(""); setItemData(null); inputRef.current?.focus(); }}>✕</button>}
             </div>
-
             {showDrop && (
               <ul className="suggestions">
                 {suggestions.map((s) => (
                   <li key={s.key} onMouseDown={() => loadCategory(s.category, s.subcategory, s.name)}>
                     <span className="sug-icon">{s.image}</span>
                     <span className="sug-name">{s.name}</span>
-                    <span className="sug-count">{s.count} listings</span>
+                    <span className="sug-count">{s.count.toLocaleString()} listings</span>
                   </li>
                 ))}
               </ul>
@@ -178,98 +210,120 @@ export default function App() {
           </div>
         )}
 
-        {!loading && itemData && (
-          <div className="results">
-            <div className="item-header">
-              <div className="item-icon-wrap">{itemData.image}</div>
-              <div>
-                <h2>{itemData.name}</h2>
-                <span className="cat-pill">{itemData.stats.count} listings tracked</span>
+        {!loading && itemData && (() => {
+          const s = itemData.stats;
+          return (
+            <div className="results">
+              <div className="item-header">
+                <div className="item-icon-wrap">{itemData.image}</div>
+                <div className="item-header-text">
+                  <h2>{itemData.name}</h2>
+                  <div className="item-meta">
+                    <span className="cat-pill">{s.count.toLocaleString()} listings · 6 mo</span>
+                    <TrendBadge trend={s.trend} />
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="stats-grid">
-              <div className="stat-card highlight">
-                <div className="stat-label">Avg Price</div>
-                <div className="stat-value">${itemData.stats.avg.toLocaleString()}</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Median</div>
-                <div className="stat-value">${itemData.stats.median.toLocaleString()}</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Lowest</div>
-                <div className="stat-value low">${itemData.stats.low.toLocaleString()}</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Highest</div>
-                <div className="stat-value high">${itemData.stats.high.toLocaleString()}</div>
-              </div>
-            </div>
-
-            <div className="card">
-              <h3>Fair Price Range</h3>
-              <div className="fair-range-display">
-                <span className="fair-price">${itemData.stats.fairLow.toLocaleString()}</span>
-                <span className="fair-dash">–</span>
-                <span className="fair-price">${itemData.stats.fairHigh.toLocaleString()}</span>
-              </div>
-              <PriceBar low={itemData.stats.low} fairLow={itemData.stats.fairLow} fairHigh={itemData.stats.fairHigh} high={itemData.stats.high} />
-            </div>
-
-            <div className="card">
-              <h3>Check a Listing Price</h3>
-              <p className="card-sub">Found a listing? Enter the asking price to see if it's a deal.</p>
-              <div className="price-check-row">
-                <span className="dollar">$</span>
-                <input className="price-input" type="number" placeholder="Enter asking price" value={asking} onChange={(e) => setAsking(e.target.value)} />
-              </div>
-              <VerdictBox fairLow={itemData.stats.fairLow} fairHigh={itemData.stats.fairHigh} asking={asking} />
-            </div>
-
-            <div className="card">
-              <h3>Recent Listings</h3>
-              <table className="sales-table">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Price</th>
-                    <th>Condition</th>
-                    <th>Location</th>
-                    <th>Source</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {itemData.sales.map((sale, i) => (
-                    <tr key={i}>
-                      <td>
-                        {sale.url
-                          ? <a className="listing-link" href={sale.url} target="_blank" rel="noopener noreferrer">{sale.title}</a>
-                          : <span className="listing-title">{sale.title}</span>
-                        }
-                      </td>
-                      <td className="sale-price">${sale.price.toLocaleString()}</td>
-                      <td><ConditionBadge condition={sale.condition} /></td>
-                      <td className="location-cell">{sale.location}</td>
-                      <td className="source">{sale.source}</td>
-                    </tr>
+              {/* Source breakdown */}
+              {s.sources && (
+                <div className="source-bar">
+                  {Object.entries(s.sources).map(([src, cnt]) => (
+                    <span key={src} className={`source-tag source-${src}`}>
+                      {src === "bringatrailer" ? "Bring a Trailer" : src === "ebay" ? "eBay" : "Craigslist"} — {cnt}
+                    </span>
                   ))}
-                </tbody>
-              </table>
+                  {s.outliersRemoved > 0 && (
+                    <span className="outlier-note">{s.outliersRemoved} outliers removed</span>
+                  )}
+                </div>
+              )}
+
+              <div className="stats-grid">
+                <div className="stat-card highlight">
+                  <div className="stat-label">Weighted Avg</div>
+                  <div className="stat-value">${s.weightedAvg.toLocaleString()}</div>
+                  <div className="stat-sub">Recent sales weighted more</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Median</div>
+                  <div className="stat-value">${s.median.toLocaleString()}</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Lowest</div>
+                  <div className="stat-value low">${s.low.toLocaleString()}</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-label">Highest</div>
+                  <div className="stat-value high">${s.high.toLocaleString()}</div>
+                </div>
+              </div>
+
+              <div className="card">
+                <h3>Fair Price Range</h3>
+                <div className="fair-range-header">
+                  <div className="fair-range-display">
+                    <span className="fair-price">${s.fairLow.toLocaleString()}</span>
+                    <span className="fair-dash">–</span>
+                    <span className="fair-price">${s.fairHigh.toLocaleString()}</span>
+                  </div>
+                  <Sparkline buckets={itemData.trendBuckets} />
+                </div>
+                <PriceBar low={s.low} p25={s.p25} p75={s.p75} fairLow={s.fairLow} fairHigh={s.fairHigh} high={s.high} />
+              </div>
+
+              <div className="card">
+                <h3>Check a Listing Price</h3>
+                <p className="card-sub">Paste a price you're seeing — we'll tell you if it's worth it.</p>
+                <div className="price-check-row">
+                  <span className="dollar">$</span>
+                  <input className="price-input" type="number" placeholder="Enter asking price" value={asking} onChange={(e) => setAsking(e.target.value)} />
+                </div>
+                <VerdictBox fairLow={s.fairLow} fairHigh={s.fairHigh} asking={asking} />
+              </div>
+
+              <div className="card">
+                <h3>Recent Listings</h3>
+                <table className="sales-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Price</th>
+                      <th>Condition</th>
+                      <th>Location</th>
+                      <th>Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itemData.sales.map((sale, i) => (
+                      <tr key={i} className={sale.sold ? "row-sold" : ""}>
+                        <td>
+                          {sale.url
+                            ? <a className="listing-link" href={sale.url} target="_blank" rel="noopener noreferrer">{sale.title}</a>
+                            : <span className="listing-title">{sale.title}</span>}
+                        </td>
+                        <td className="sale-price">${sale.price.toLocaleString()}</td>
+                        <td><ConditionBadge condition={sale.condition} /></td>
+                        <td className="location-cell">{sale.location}</td>
+                        <td><SourceTag source={sale.source} sold={sale.sold} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {!loading && !itemData && (
           <div className="empty-state">
-            {dbReady === false && (
+            {totalListings === 0 && (
               <div className="scraping-notice">
                 <div className="scraping-spinner" />
                 <p className="scraping-title">Scraping live data…</p>
-                <p className="scraping-sub">First run pulls listings from Craigslist across 15 metro areas. Takes 3–5 minutes. Browse a category below to check back.</p>
+                <p className="scraping-sub">First run pulls listings from Craigslist across 25 metros + Bring a Trailer historical sales. Takes 5–10 minutes.</p>
               </div>
             )}
-
             <p className="empty-heading">Browse by category</p>
             <p className="empty-label">Click any category to see real market prices</p>
             <div className="category-chips">
@@ -284,7 +338,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        Data scraped from Craigslist &amp; eBay · Updated every 4 hours · For reference only
+        Data from Craigslist &amp; Bring a Trailer · 6-month window · Weighted by recency · Updated every 4 hours
       </footer>
     </div>
   );
